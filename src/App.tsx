@@ -2,9 +2,12 @@ import { useEffect, useRef, useState } from "react";
 import Grid from "./components/Grid/Grid";
 import { Model } from "./ai/Model";
 import { Action, CellType } from "./interface/interface";
-import { epsilon, gamma, impactMap, initialGird, surroundingMap } from "./consts/consts";
+import { epsilon, gamma, impactMap, surroundingMap } from "./consts/consts";
+import { createInitialGrid } from "./helpers/helpers";
 
-const model = new Model(epsilon, gamma);
+const model = new Model(epsilon, gamma, "survival");
+
+const stepTime = 300;
 
 const getGridCell = (grid: CellType[][], x: number, y: number) => grid[y]?.[x] || CellType.fail;
 
@@ -20,15 +23,18 @@ const getSurroundings = (grid: CellType[][], position: { x: number; y: number })
 ];
 
 function App() {
-  const [grid, setGrid] = useState(initialGird);
-  const [position, setPosition] = useState({ x: 2, y: 2 });
+  const initialGrid = createInitialGrid();
+  const initialPosition = { x: 2, y: 2 };
+
+  const [grid, setGrid] = useState(initialGrid);
+  const [position, setPosition] = useState(initialPosition);
   const [health, setHealth] = useState(5);
 
   const stepRef = useRef<() => Promise<void>>(async () => {});
 
   const restart = () => {
-    setGrid(initialGird);
-    setPosition({ x: 2, y: 2 });
+    setGrid(initialGrid);
+    setPosition(initialPosition);
     setHealth(5);
   };
 
@@ -83,7 +89,7 @@ function App() {
     const loop = async () => {
       while (!isCancelled) {
         await stepRef.current();
-        await new Promise((r) => setTimeout(r, 500));
+        await new Promise((r) => setTimeout(r, stepTime));
       }
     };
 

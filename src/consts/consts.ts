@@ -16,11 +16,3 @@ export const surroundingMap: { [key in CellType]: number[] } = {
 
 export const epsilon = 0.2;
 export const gamma = 0.9;
-
-export const initialGird = [
-  [CellType.cactus, CellType.empty, CellType.empty, CellType.cactus, CellType.empty],
-  [CellType.empty, CellType.food, CellType.empty, CellType.empty, CellType.empty],
-  [CellType.empty, CellType.empty, CellType.empty, CellType.food, CellType.empty],
-  [CellType.empty, CellType.empty, CellType.cactus, CellType.empty, CellType.empty],
-  [CellType.food, CellType.empty, CellType.empty, CellType.empty, CellType.empty],
-];

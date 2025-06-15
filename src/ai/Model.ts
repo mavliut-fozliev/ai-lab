@@ -3,19 +3,24 @@ import { Action, StateVector } from "../interface/interface";
 
 export class Model {
   private model: tf.Sequential;
+  private trainCounter = 0;
+  private readonly saveEvery = 100;
+  private readonly storageKey = "localstorage://my-rl-model";
 
-  constructor(private epsilon: number, private gamma: number) {
+  constructor(private epsilon: number, private gamma: number, private mode: "survival" | "training") {
     this.model = tf.sequential();
     this.model.add(tf.layers.dense({ inputShape: [25], units: 32, activation: "relu" }));
     this.model.add(tf.layers.dense({ units: 32, activation: "relu" }));
     this.model.add(tf.layers.dense({ units: 4, activation: "linear" }));
     this.model.compile({ optimizer: tf.train.adam(0.001), loss: "meanSquaredError" });
+
+    this.loadModel();
   }
 
   private actions = [0, 1, 2, 3];
 
   async selectAction(state: StateVector): Promise<Action> {
-    if (Math.random() < this.epsilon) {
+    if (this.mode === "training" && Math.random() < this.epsilon) {
       const randIndex = Math.floor(Math.random() * this.actions.length);
       return this.actions[randIndex];
     }
@@ -34,6 +39,10 @@ export class Model {
   }
 
   async trainStep(state: StateVector, action: Action, reward: number, nextState: StateVector): Promise<void> {
+    if (this.mode === "survival") {
+      return;
+    }
+
     const currentQ = ((await this.model.predict(tf.tensor2d([state]))) as tf.Tensor).array() as Promise<number[][]>;
     const targetQ = (await currentQ)[0]; // [q0, q1, q2, q3]
 
@@ -46,5 +55,25 @@ export class Model {
     targetQ[action] = reward + this.gamma * maxNextQ;
 
     await this.model.fit(tf.tensor2d([state]), tf.tensor2d([targetQ]), { epochs: 1, verbose: 0 });
+
+    this.trainCounter++;
+    if (this.trainCounter % this.saveEvery === 0) {
+      await this.saveModel();
+    }
+  }
+
+  private async saveModel() {
+    await this.model.save(this.storageKey);
+    console.log(`✅ Model saved at step ${this.trainCounter}`);
+  }
+
+  private async loadModel() {
+    try {
+      this.model = (await tf.loadLayersModel(this.storageKey)) as tf.Sequential;
+      this.model.compile({ optimizer: tf.train.adam(0.001), loss: "meanSquaredError" });
+      console.log("📦 Loaded model from local storage");
+    } catch (err) {
+      console.warn("⚠️ No saved model found or failed to load, using fresh weights");
+    }
   }
 }
