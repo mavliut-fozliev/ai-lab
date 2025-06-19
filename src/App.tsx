@@ -2,25 +2,11 @@ import { useEffect, useRef, useState } from "react";
 import Grid from "./grid/components/Grid/Grid";
 import { Model } from "./ai/Model";
 import { Action, CellType } from "./grid/interface";
-import { impactMap, surroundingMap } from "./grid/consts";
-import { createInitialGrid } from "./grid/helpers";
+import { useGrid } from "./grid/useGrid";
 
 const model = new Model("survival");
 
 const stepTime = 300;
-
-const getGridCell = (grid: CellType[][], x: number, y: number) => grid[y]?.[x] || CellType.fail;
-
-const getSurroundings = (grid: CellType[][], position: { x: number; y: number }) => [
-  getGridCell(grid, position.x - 1, position.y - 1),
-  getGridCell(grid, position.x, position.y - 1),
-  getGridCell(grid, position.x + 1, position.y - 1),
-  getGridCell(grid, position.x - 1, position.y),
-  getGridCell(grid, position.x + 1, position.y),
-  getGridCell(grid, position.x - 1, position.y + 1),
-  getGridCell(grid, position.x, position.y + 1),
-  getGridCell(grid, position.x + 1, position.y + 1),
-];
 
 const initialPosition = { x: 2, y: 2 };
 const initialHealth = 5;
@@ -28,14 +14,15 @@ const initialHealth = 5;
 function App() {
   const [run, setRun] = useState(false);
 
-  const [grid, setGrid] = useState(createInitialGrid());
+  const { grid, getSurroundings, recreateGrid, getCellImpact, updateCell } = useGrid();
+
   const [position, setPosition] = useState(initialPosition);
   const [health, setHealth] = useState(initialHealth);
 
   const stepRef = useRef<() => Promise<void>>(async () => {});
 
   const restart = () => {
-    setGrid(createInitialGrid());
+    recreateGrid();
     setPosition(initialPosition);
     setHealth(initialHealth);
   };
@@ -48,9 +35,8 @@ function App() {
       return restart();
     }
 
-    const surroundings = getSurroundings(grid, position);
-    const surroundingsState = surroundings.flatMap((s) => surroundingMap[s]);
-    const state = [...surroundingsState, health / 10];
+    const surroundings = getSurroundings(position);
+    const state = [...surroundings, health / 10];
 
     const action = await model.selectAction(state);
 
@@ -60,8 +46,7 @@ function App() {
     else if (action === Action.Left) newPosition.x--;
     else if (action === Action.Right) newPosition.x++;
 
-    const cell = getGridCell(grid, newPosition.x, newPosition.y);
-    const impact = impactMap[cell];
+    const impact = getCellImpact(newPosition.x, newPosition.y);
     const newHealth = health + impact > 10 ? 10 : health + impact;
 
     const dead = newHealth < 1;
@@ -71,16 +56,10 @@ function App() {
 
     setPosition(newPosition);
     setHealth(newHealth);
+    updateCell(newPosition.x, newPosition.y);
 
-    if (cell === CellType.food) {
-      const newGrid = grid.map((row) => [...row]);
-      newGrid[newPosition.y][newPosition.x] = CellType.empty;
-      setGrid(newGrid);
-    }
-
-    const newSurroundings = getSurroundings(grid, newPosition);
-    const newSurroundingsState = newSurroundings.flatMap((s) => surroundingMap[s]);
-    const nextState = [...newSurroundingsState, newHealth / 10];
+    const newSurroundings = getSurroundings(newPosition);
+    const nextState = [...newSurroundings, newHealth / 10];
 
     await model.trainStep(state, action, impact, nextState);
   };
@@ -103,6 +82,10 @@ function App() {
 
     return () => clearTimeout(timeoutId);
   }, [run]);
+
+  useEffect(() => {
+    recreateGrid();
+  }, []);
 
   return (
     <div className="App">
