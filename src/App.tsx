@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import Grid from "./grid/components/Grid/Grid";
-import { Model } from "./ai/Model";
-import { Action, CellType } from "./grid/interface";
+import { CellType } from "./grid/interface";
 import { useGrid } from "./grid/useGrid";
+import { Model } from "./ai/Model";
+import { Action } from "./ai/interface";
 
 const model = new Model("survival");
 

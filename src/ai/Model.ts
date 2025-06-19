@@ -1,5 +1,5 @@
 import * as tf from "@tensorflow/tfjs";
-import { Action, StateVector } from "../grid/interface";
+import { Action, StateVector } from "./interface";
 
 export class Model {
   private model: tf.Sequential;
