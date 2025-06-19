@@ -1,13 +1,17 @@
 import * as tf from "@tensorflow/tfjs";
-import { Action, StateVector } from "../interface/interface";
+import { Action, StateVector } from "../grid/interface";
 
 export class Model {
   private model: tf.Sequential;
+
+  private epsilon = 0.2;
+  private gamma = 0.9;
+
   private trainCounter = 0;
   private readonly saveEvery = 100;
   private readonly storageKey = "localstorage://my-rl-model";
 
-  constructor(private epsilon: number, private gamma: number, private mode: "survival" | "training") {
+  constructor(private mode: "survival" | "training") {
     this.model = tf.sequential();
     this.model.add(tf.layers.dense({ inputShape: [25], units: 32, activation: "relu" }));
     this.model.add(tf.layers.dense({ units: 32, activation: "relu" }));

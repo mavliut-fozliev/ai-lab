@@ -1,4 +1,4 @@
-import { CellType } from "../interface/interface";
+import { CellType } from "./interface";
 
 export const impactMap: { [key in CellType]: number } = {
   [CellType.cactus]: -2,
@@ -13,6 +13,3 @@ export const surroundingMap: { [key in CellType]: number[] } = {
   [CellType.empty]: [0, 0, 1],
   [CellType.fail]: [0, 0, 0],
 };
-
-export const epsilon = 0.2;
-export const gamma = 0.9;

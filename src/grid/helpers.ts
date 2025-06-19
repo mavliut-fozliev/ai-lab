@@ -1,4 +1,4 @@
-import { CellType } from "../interface/interface";
+import { CellType } from "./interface";
 
 export function createInitialGrid(): CellType[][] {
   const size = 5;
@@ -30,9 +30,11 @@ export function createInitialGrid(): CellType[][] {
 
 function placeRandomItems(grid: CellType[], type: CellType, count: number, availableIndices: number[]) {
   let placed = 0;
+
   while (placed < count) {
     const randomIdx = Math.floor(Math.random() * availableIndices.length);
     const index = availableIndices[randomIdx];
+
     if (grid[index] === CellType.empty) {
       grid[index] = type;
       placed++;

@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import Grid from "./components/Grid/Grid";
+import Grid from "./grid/components/Grid/Grid";
 import { Model } from "./ai/Model";
-import { Action, CellType } from "./interface/interface";
-import { epsilon, gamma, impactMap, surroundingMap } from "./consts/consts";
-import { createInitialGrid } from "./helpers/helpers";
+import { Action, CellType } from "./grid/interface";
+import { impactMap, surroundingMap } from "./grid/consts";
+import { createInitialGrid } from "./grid/helpers";
 
-const model = new Model(epsilon, gamma, "survival");
+const model = new Model("survival");
 
 const stepTime = 300;
 
@@ -22,20 +22,22 @@ const getSurroundings = (grid: CellType[][], position: { x: number; y: number })
   getGridCell(grid, position.x + 1, position.y + 1),
 ];
 
-function App() {
-  const initialGrid = createInitialGrid();
-  const initialPosition = { x: 2, y: 2 };
+const initialPosition = { x: 2, y: 2 };
+const initialHealth = 5;
 
-  const [grid, setGrid] = useState(initialGrid);
+function App() {
+  const [run, setRun] = useState(false);
+
+  const [grid, setGrid] = useState(createInitialGrid());
   const [position, setPosition] = useState(initialPosition);
-  const [health, setHealth] = useState(5);
+  const [health, setHealth] = useState(initialHealth);
 
   const stepRef = useRef<() => Promise<void>>(async () => {});
 
   const restart = () => {
-    setGrid(initialGrid);
+    setGrid(createInitialGrid());
     setPosition(initialPosition);
-    setHealth(5);
+    setHealth(initialHealth);
   };
 
   // step
@@ -62,7 +64,7 @@ function App() {
     const impact = impactMap[cell];
     const newHealth = health + impact > 10 ? 10 : health + impact;
 
-    const dead = health < 1;
+    const dead = newHealth < 1;
     if (dead) {
       return restart();
     }
@@ -83,27 +85,32 @@ function App() {
     await model.trainStep(state, action, impact, nextState);
   };
 
+  const handleStart = () => {
+    setRun(!run);
+  };
+
   useEffect(() => {
-    let isCancelled = false;
+    let timeoutId: NodeJS.Timeout;
 
-    const loop = async () => {
-      while (!isCancelled) {
-        await stepRef.current();
-        await new Promise((r) => setTimeout(r, stepTime));
-      }
+    const step = async () => {
+      if (!run) return;
+
+      await stepRef.current();
+      timeoutId = setTimeout(step, stepTime);
     };
 
-    loop();
+    step();
 
-    return () => {
-      isCancelled = true; // чтобы не продолжал после размонтирования
-    };
-  }, []);
+    return () => clearTimeout(timeoutId);
+  }, [run]);
 
   return (
     <div className="App">
       <Grid field={grid} botPosition={position} />
       <div>{health > 0 ? `Health: ${health}` : "Dead"}</div>
+      <button style={{ fontSize: 26 }} onClick={handleStart}>
+        {run ? "Stop" : "Start"}
+      </button>
     </div>
   );
 }

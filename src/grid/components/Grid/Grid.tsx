@@ -1,5 +1,5 @@
-import { CellType } from "../../interface/interface";
-import Bot from "../Bot/Bot";
+import { CellType } from "../../interface";
+import Bot from "../Agent/Agent";
 import Cell from "../Cell/Cell";
 
 function Grid({ field, botPosition }: { field: CellType[][]; botPosition: { x: number; y: number } }) {

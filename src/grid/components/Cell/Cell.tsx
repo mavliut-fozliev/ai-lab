@@ -1,5 +1,5 @@
 import React, { ReactNode } from "react";
-import { CellType } from "../../interface/interface";
+import { CellType } from "../../interface";
 
 function Cell({ type, bot }: { type: CellType; bot?: ReactNode }) {
   const color = {
