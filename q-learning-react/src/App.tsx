@@ -5,7 +5,7 @@ import { useGrid } from "./grid/useGrid";
 import { Model } from "./ai/Model";
 import { Action } from "./ai/interface";
 
-const model = new Model("survival");
+const model = new Model("training");
 
 const stepTime = 300;
 

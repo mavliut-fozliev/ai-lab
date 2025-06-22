@@ -4,9 +4,9 @@ import { CellType, Position } from "./interface";
 export function useGrid() {
   const [grid, setGrid] = useState<CellType[][]>([]);
 
-  const size = 5;
-  const footAmount = 3;
-  const cactusAmount = 3;
+  const size = 8;
+  const footAmount = 30;
+  const cactusAmount = 10;
 
   const totalCells = size * size;
 
